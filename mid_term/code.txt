@@ -1,0 +1,180 @@
+Câu 1:
+char inChar;  // Declare inChar globally
+
+void setup() {
+  pinMode(1, OUTPUT);  // LED for forward
+  pinMode(2, OUTPUT);  // LED for backward
+  pinMode(3, OUTPUT);  // LED for turn left
+  pinMode(4, OUTPUT);  // LED for turn right
+  pinMode(8, OUTPUT);
+  pinMode(11, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  pinMode(10, OUTPUT);
+
+  Serial.begin(9600);  // Initialize serial communication
+}
+
+void left_speed(int speed) {
+  if (speed >= 0) {
+    digitalWrite(11, HIGH);
+    digitalWrite(8, LOW);
+    analogWrite(9, speed);
+  } else {
+    speed = 0 - speed;
+    digitalWrite(8, HIGH);
+    digitalWrite(11, LOW);
+    analogWrite(9, speed);
+  }
+}
+
+void right_speed(int speed) {
+  if (speed >= 0) {
+    digitalWrite(13, HIGH);
+    digitalWrite(12, LOW);
+    analogWrite(10, speed);
+  } else {
+    speed = 0 - speed;
+    digitalWrite(12, HIGH);
+    digitalWrite(13, LOW);
+    analogWrite(10, speed);
+  }
+}
+
+void forward(int speed) {
+  left_speed(speed);
+  right_speed(speed);
+  digitalWrite(1, HIGH);  // Turn on LED for forward movement
+  digitalWrite(2, LOW);   // Turn off LED for backward
+  digitalWrite(3, LOW);   // Turn off LED for turn left
+  digitalWrite(4, LOW);   // Turn off LED for turn right
+}
+
+void backward(int speed) {
+  left_speed(0 - speed);
+  right_speed(0 - speed);
+  digitalWrite(1, LOW);   // Turn off LED for forward
+  digitalWrite(2, HIGH);  // Turn on LED for backward
+  digitalWrite(3, LOW);   // Turn off LED for turn left
+  digitalWrite(4, LOW);   // Turn off LED for turn right
+}
+
+void turnleft(int speed) {
+  left_speed(0);
+  right_speed(speed);
+  digitalWrite(1, LOW);   // Turn off LED for forward
+  digitalWrite(2, LOW);   // Turn off LED for backward
+  digitalWrite(3, HIGH);  // Turn on LED for turn left
+  digitalWrite(4, LOW);   // Turn off LED for turn right
+}
+
+void turnright(int speed) {
+  left_speed(speed);
+  right_speed(0);
+  digitalWrite(1, LOW);   // Turn off LED for forward
+  digitalWrite(2, LOW);   // Turn off LED for backward
+  digitalWrite(3, LOW);   // Turn off LED for turn left
+  digitalWrite(4, HIGH);  // Turn on LED for turn right
+}
+
+void loop() {
+  if (Serial.available()) {
+    inChar = Serial.read();
+
+    if (inChar == 'i') {
+      forward(100);
+      delay(2000);
+    }
+    if (inChar == 'j') {
+      backward(100);
+      delay(2000);
+    }
+    if (inChar == 'k') {
+      turnleft(100);
+      delay(2000);
+    }
+    if (inChar == 'l') {
+      turnright(100);
+      delay(2000);
+    }
+  }
+}
+
+Cau 3:
+// Define LED pins
+const int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+
+void setup() {
+  // Initialize the LED pins as OUTPUT
+  for (int i = 0; i < 10; i++) {
+    pinMode(ledPins[i], OUTPUT);
+  }
+  randomSeed(analogRead(A0)); // Initialize random number generator
+}
+
+void loop() {
+  // Generate a random 10-bit number (between 0 and 1023)
+  int randomNumber = random(0, 1024);
+  
+  // Display the binary number on LEDs
+  for (int i = 0; i < 10; i++) {
+    int bitValue = (randomNumber >> (9 - i)) & 1; // Extract the bit value
+    digitalWrite(ledPins[i], bitValue); // Turn LED on or off based on bit value
+  }
+  
+  delay(1000); // Wait for 1 second before changing the number
+}
+Cau 4:
+#define DHTPIN 21      // Chân kết nối DHT22
+#define DHTTYPE DHT22  // Loại cảm biến
+#define LDR_PIN 34     // Chân ADC kết nối cảm biến ánh sáng
+
+#define BLYNK_TEMPLATE_ID "TMPL6EFuIC96E"
+#define BLYNK_TEMPLATE_NAME "weather station 2"
+#define BLYNK_AUTH_TOKEN "VkWpRCRZGQIJSWO84pJwIYVW-TN8n3T6"
+
+#include <DHT.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+#include <Arduino.h>
+
+char ssid[] = "Wokwi-GUEST";
+char pass[] = "";
+char auth[] = BLYNK_AUTH_TOKEN;
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Blynk.begin(auth, ssid, pass);
+  dht.begin();
+}
+
+void loop() {
+  float temp = dht.readTemperature(); // Đọc nhiệt độ
+  float humidity = dht.readHumidity(); // Đọc độ ẩm
+  int ldrValue = analogRead(LDR_PIN); // Đọc giá trị ánh sáng
+
+  // Hiển thị dữ liệu trên Serial Monitor
+  Serial.print("Nhiệt độ: ");
+  Serial.print(temp);
+  Serial.println("°C");
+
+  Serial.print("Độ Ẩm: ");
+  Serial.print(humidity);
+  Serial.println("%");
+
+  Serial.print("Ánh sáng: ");
+  Serial.println(ldrValue);
+
+  // Gửi dữ liệu lên Blynk
+  Blynk.virtualWrite(V1, temp);       // Nhiệt độ
+  Blynk.virtualWrite(V0, humidity);   // Độ ẩm
+  Blynk.virtualWrite(V2, ldrValue);   // Cường độ ánh sáng
+
+  delay(1000);
+}
+
